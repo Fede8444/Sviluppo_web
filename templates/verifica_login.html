@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifica accesso - TEPSIT</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="contenitore">
+        <h1>Verifica accesso</h1>
+
+        <p class="sottotitolo">
+            Abbiamo inviato un codice di sicurezza al tuo indirizzo email.
+        </p>
+
+        <form action="{{ url_for('verifica_login') }}" method="POST">
+
+            <label for="codice">Codice di sicurezza</label>
+
+            <input
+                type="text"
+                id="codice"
+                name="codice"
+                placeholder="Inserisci il codice"
+                maxlength="6"
+                pattern="[0-9]{6}"
+                inputmode="numeric"
+                required
+            >
+
+            <button type="submit">Conferma accesso</button>
+
+        </form>
+
+        {% if errore %}
+            <p class="errore">{{ errore }}</p>
+        {% endif %}
+
+        <p>
+            <a href="{{ url_for('login') }}">Torna al login</a>
+        </p>
+
+    </div>
+
+</body>
+</html>

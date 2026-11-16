@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifica email - TEPSIT</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="contenitore">
+        <h1>Verifica email</h1>
+
+        <p class="sottotitolo">
+            Ti abbiamo inviato un codice di 6 cifre.
+        </p>
+
+        <form action="{{ url_for('verifica') }}" method="POST">
+
+            <label for="codice">Codice di verifica</label>
+
+            <input
+                type="text"
+                id="codice"
+                name="codice"
+                placeholder="Inserisci il codice"
+                maxlength="6"
+                pattern="[0-9]{6}"
+                inputmode="numeric"
+                required
+            >
+
+            <button type="submit">Conferma email</button>
+
+        </form>
+
+        {% if errore %}
+            <p class="errore">{{ errore }}</p>
+        {% endif %}
+
+        <form action="{{ url_for('rinvia_codice') }}" method="POST">
+            <button type="submit">Invia un nuovo codice</button>
+        </form>
+
+    </div>
+
+</body>
+</html>
