@@ -1,0 +1,365 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione prodotti - ElectroShop</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .admin-container {
+            max-width: 1150px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .admin-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        .admin-section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 28px;
+            box-shadow: 0 3px 15px rgba(0,0,0,.07);
+        }
+
+        .admin-section h2 {
+            margin-top: 0;
+        }
+
+        .admin-form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px;
+        }
+
+        .admin-form label {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            font-weight: 600;
+        }
+
+        .admin-form input,
+        .admin-form textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font: inherit;
+            box-sizing: border-box;
+        }
+
+        .admin-form textarea {
+            min-height: 95px;
+            resize: vertical;
+        }
+
+        .admin-form .full {
+            grid-column: 1 / -1;
+        }
+
+        .admin-button,
+        .action-link {
+            display: inline-block;
+            padding: 10px 15px;
+            border: 0;
+            border-radius: 7px;
+            background: #1769aa;
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+            font: inherit;
+        }
+
+        .admin-button:hover,
+        .action-link:hover {
+            opacity: .88;
+        }
+
+        .products-table-wrap {
+            overflow-x: auto;
+        }
+
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        .products-table th,
+        .products-table td {
+            padding: 13px 10px;
+            border-bottom: 1px solid #e5e5e5;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .products-table th {
+            background: #f5f7fa;
+        }
+
+        .product-thumb {
+            width: 65px;
+            height: 60px;
+            object-fit: contain;
+            border-radius: 6px;
+            background: #f5f5f5;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .edit-link {
+            background: #e69a19;
+            color: #171717;
+        }
+
+        .delete-button {
+            background: #c93636;
+            color: white;
+        }
+
+        .delete-form {
+            margin: 0;
+        }
+
+        .flash-messages {
+            margin: 15px 0;
+        }
+
+        .flash-messages p {
+            padding: 11px 14px;
+            background: #e8f5e9;
+            border-radius: 7px;
+        }
+
+        .back-link {
+            color: #1769aa;
+            text-decoration: none;
+        }
+
+        @media(max-width: 650px) {
+            .admin-form {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-form .full {
+                grid-column: auto;
+            }
+
+            .admin-section {
+                padding: 17px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="logo">ElectroShop</div>
+
+    <div class="header-links">
+        <a href="{{ url_for('home') }}">Vai al negozio</a>
+        <a href="{{ url_for('logout') }}">Esci</a>
+    </div>
+</header>
+
+<main class="admin-container">
+
+    <div class="admin-top">
+        <div>
+            <h1>Pannello gestore</h1>
+            <p>Gestisci i prodotti del tuo negozio elettronico.</p>
+        </div>
+
+        <a class="back-link" href="{{ url_for('home') }}">
+            ← Torna al negozio
+        </a>
+    </div>
+
+    <!-- MESSAGGI -->
+    <div class="flash-messages">
+        {% with messaggi = get_flashed_messages() %}
+            {% if messaggi %}
+                {% for messaggio in messaggi %}
+                    <p>{{ messaggio }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- AGGIUNTA PRODOTTO -->
+    <section class="admin-section">
+
+        <h2>Aggiungi un prodotto</h2>
+
+        <form class="admin-form"
+              action="{{ url_for('nuovo_prodotto') }}"
+              method="POST"
+              enctype="multipart/form-data">
+
+            <label>
+                Nome *
+                <input type="text"
+                       name="nome"
+                       maxlength="100"
+                       required>
+            </label>
+
+            <label>
+                Prezzo (€) *
+                <input type="number"
+                       name="prezzo"
+                       min="0"
+                       step="0.01"
+                       required>
+            </label>
+
+            <label>
+                Quantità disponibile *
+                <input type="number"
+                       name="quantita"
+                       min="0"
+                       step="1"
+                       required>
+            </label>
+
+            <label>
+                Immagine del prodotto
+                <input type="file"
+                       name="immagine"
+                       accept="image/*">
+            </label>
+
+            <label class="full">
+                Descrizione
+                <textarea name="descrizione"
+                          placeholder="Descrivi il prodotto..."></textarea>
+            </label>
+
+            <div class="full">
+                <button class="admin-button" type="submit">
+                    Aggiungi prodotto
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+    <!-- ELENCO PRODOTTI -->
+    <section class="admin-section">
+
+        <h2>Prodotti presenti ({{ prodotti|length }})</h2>
+
+        {% if prodotti %}
+
+            <div class="products-table-wrap">
+
+                <table class="products-table">
+
+                    <thead>
+                        <tr>
+                            <th>Immagine</th>
+                            <th>Nome</th>
+                            <th>Prezzo</th>
+                            <th>Quantità</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for prodotto in prodotti %}
+
+                            <tr>
+
+                                <td>
+                                    <img class="product-thumb"
+                                         src="{{ url_for('immagine_prodotto', id_prodotto=prodotto[0]) }}"
+                                         alt="{{ prodotto[1] }}"
+                                         onerror="this.style.display='none'">
+                                </td>
+
+                                <td>
+                                    <strong>{{ prodotto[1] }}</strong>
+
+                                    {% if prodotto[2] %}
+                                        <br>
+                                        <small>{{ prodotto[2]|truncate(75) }}</small>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    € {{ "%.2f"|format(prodotto[3]) }}
+                                </td>
+
+                                <td>
+                                    {{ prodotto[4] }}
+                                </td>
+
+                                <td>
+
+                                    <div class="actions">
+
+                                        <a class="action-link edit-link"
+                                           href="{{ url_for('modifica_prodotto', id_prodotto=prodotto[0]) }}">
+                                            Modifica
+                                        </a>
+
+                                        <form class="delete-form"
+                                              action="{{ url_for('elimina_prodotto', id_prodotto=prodotto[0]) }}"
+                                              method="POST"
+                                              onsubmit="return confirm('Vuoi davvero eliminare questo prodotto?');">
+
+                                            <button class="admin-button delete-button"
+                                                    type="submit">
+                                                Elimina
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <p>
+                Non ci sono ancora prodotti nel catalogo.
+                Usa il modulo qui sopra per aggiungerne uno.
+            </p>
+
+        {% endif %}
+
+    </section>
+
+</main>
+
+</body>
+</html>

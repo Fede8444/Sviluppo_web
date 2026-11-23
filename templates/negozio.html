@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElectroShop - Negozio di elettronica</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <header class="header">
+        <a href="{{ url_for('home') }}" class="logo">Electro<span>Shop</span></a>
+
+        <form class="search-bar" action="{{ url_for('home') }}" method="GET">
+            <input type="text" name="q" placeholder="Cerca un prodotto..." value="{{ request.args.get('q', '') }}">
+            <button type="submit">Cerca</button>
+        </form>
+
+        <nav class="header-links">
+            {% if session.get('token') %}
+                <a href="{{ url_for('dashboard') }}">Il mio account</a>
+
+                {% if session.get('ruolo') == 'gestore' %}
+                    <a href="{{ url_for('admin') }}">Gestione</a>
+                {% endif %}
+
+                <a href="{{ url_for('logout') }}">Esci</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Accedi</a>
+                <a href="{{ url_for('registrati') }}">Registrati</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <nav class="categories">
+        <a href="#">Tutte le categorie</a>
+        <a href="#">Smartphone</a>
+        <a href="#">Computer</a>
+        <a href="#">Gaming</a>
+        <a href="#">Audio</a>
+        <a href="#">Accessori</a>
+    </nav>
+
+    <main class="main-content">
+
+        <section class="welcome">
+            <h1>Benvenuto su ElectroShop</h1>
+            <p>Scopri i migliori prodotti di elettronica.</p>
+        </section>
+
+        <section class="products-section">
+
+            <h2>I nostri prodotti</h2>
+
+            {% if prodotti %}
+
+                <div class="products-grid">
+
+                    {% for prodotto in prodotti %}
+
+                        <article class="product-card">
+
+                            <div class="product-image">
+                                <img
+                                    src="{{ url_for('immagine_prodotto', id_prodotto=prodotto[0]) }}"
+                                    alt="{{ prodotto[1] }}"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                >
+
+                                <div class="image-placeholder" style="display: none;">
+                                    Nessuna immagine
+                                </div>
+                            </div>
+
+                            <div class="product-info">
+
+                                <h3>{{ prodotto[1] }}</h3>
+
+                                <p class="description">
+                                    {{ prodotto[2] or 'Nessuna descrizione disponibile.' }}
+                                </p>
+
+                                <p class="price">
+                                    € {{ "%.2f"|format(prodotto[3]) }}
+                                </p>
+
+                                {% if prodotto[4] > 0 %}
+                                    <p class="available">Disponibile</p>
+                                {% else %}
+                                    <p class="unavailable">Non disponibile</p>
+                                {% endif %}
+
+                                <a
+                                    href="{{ url_for('dettaglio_prodotto', id_prodotto=prodotto[0]) }}"
+                                    class="product-button"
+                                >
+                                    Visualizza prodotto
+                                </a>
+
+                            </div>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-products">
+                    <h3>Non ci sono ancora prodotti</h3>
+                    <p>Torna più tardi per scoprire le novità!</p>
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 ElectroShop - Tutti i diritti riservati</p>
+    </footer>
+
+</body>
+</html>
