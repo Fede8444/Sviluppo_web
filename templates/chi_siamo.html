@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi siamo - ElectroShop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .about-container {
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 30px;
+        }
+
+        .about-container h1 {
+            color: #131921;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .about-section {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .about-section h2 {
+            color: #131921;
+            margin-bottom: 15px;
+        }
+
+        .about-section p {
+            color: #444;
+            line-height: 1.7;
+        }
+
+        .about-button {
+            display: inline-block;
+            background: #ffd814;
+            color: #131921;
+            padding: 12px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .about-button:hover {
+            background: #f7ca00;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <a href="{{ url_for('home') }}" class="logo">Electro<span>Shop</span></a>
+
+        <nav class="header-links">
+            <a href="{{ url_for('home') }}">Negozio</a>
+
+            {% if session.get('token') %}
+                <a href="{{ url_for('dashboard') }}">Il mio account</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Accedi</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="about-container">
+
+        <h1>Chi siamo</h1>
+
+        <section class="about-section">
+            <h2>Benvenuti su ElectroShop</h2>
+            <p>
+                ElectroShop è un negozio online dedicato al mondo
+                dell'elettronica e della tecnologia.
+                Il nostro obiettivo è offrire ai clienti un'esperienza
+                di acquisto semplice e intuitiva, permettendo loro
+                di scoprire e acquistare prodotti tecnologici.
+            </p>
+        </section>
+
+        <section class="about-section">
+            <h2>La nostra missione</h2>
+            <p>
+                Vogliamo rendere la tecnologia accessibile a tutti,
+                offrendo un catalogo di prodotti elettronici
+                e un servizio di acquisto pratico e veloce.
+                Ci impegniamo a rendere la navigazione sul nostro
+                sito semplice e piacevole.
+            </p>
+        </section>
+
+        <section class="about-section">
+            <h2>Perché scegliere ElectroShop?</h2>
+            <p>
+                Il nostro sito permette di consultare i prodotti,
+                visualizzarne le caratteristiche, controllarne
+                la disponibilità e leggere le recensioni degli altri clienti.
+            </p>
+        </section>
+
+        <section class="about-section">
+            <h2>Contattaci</h2>
+            <p>
+                Per informazioni o richieste puoi contattare
+                il nostro servizio di assistenza.
+            </p>
+
+            <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=electroshop.assistenza@gmail.com"
+                target="_blank"
+                class="about-button"
+            >
+                Contatta l'assistenza
+            </a>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <h3>ElectroShop</h3>
+        <p>© 2026 ElectroShop - Tutti i diritti riservati</p>
+    </footer>
+
+</body>
+</html>
+    

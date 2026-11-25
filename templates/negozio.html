@@ -1,4 +1,5 @@
 
+```html
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -6,6 +7,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ElectroShop - Negozio di elettronica</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .footer {
+            background: #131921;
+            color: white;
+            text-align: center;
+            padding: 30px 15px;
+            margin-top: 40px;
+        }
+
+        .footer h3 {
+            color: #ffd814;
+            font-size: 23px;
+            margin-top: 0;
+        }
+
+        .footer a {
+            color: #ffd814;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .footer .copyright {
+            color: #aaa;
+            font-size: 13px;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 
 <body>
@@ -121,8 +153,26 @@
     </main>
 
     <footer class="footer">
-        <p>© 2026 ElectroShop - Tutti i diritti riservati</p>
+
+        <h3>ElectroShop</h3>
+
+        <p>
+            Contatta la nostra assistenza:
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=electroshop.assistenza@gmail.com" target="_blank">
+                electroshop.assistenza@gmail.com
+            </a>
+        </p>
+
+        <p>
+            <a href="{{ url_for('chi_siamo') }}">Chi siamo</a>
+        </p>
+
+        <p class="copyright">
+            © 2026 ElectroShop - Tutti i diritti riservati
+        </p>
+
     </footer>
 
 </body>
 </html>
+```

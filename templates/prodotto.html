@@ -1,0 +1,610 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ prodotto[1] }} - ElectroShop</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f3f4f6;
+            color: #131921;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .barra-superiore {
+            background: #131921;
+            color: white;
+            padding: 18px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            color: #ffd814;
+            font-size: 25px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .barra-superiore a:last-child {
+            color: white;
+            text-decoration: none;
+        }
+
+        .pagina {
+            max-width: 1450px;
+            margin: 25px auto;
+            padding: 0 25px;
+        }
+
+        .percorso {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .scheda-prodotto {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: minmax(280px, 1.1fr) minmax(280px, 1.5fr) minmax(220px, 0.8fr);
+            gap: 30px;
+            align-items: start;
+        }
+
+        .galleria {
+            position: relative;
+            width: 100%;
+        }
+
+        .immagine-contenitore {
+            width: 100%;
+            height: 430px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .immagine-contenitore img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            cursor: crosshair;
+        }
+
+        .zoom-prodotto {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: calc(100% + 15px);
+            width: 500px;
+            height: 500px;
+            background-color: white;
+            background-repeat: no-repeat;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.18);
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .informazioni h1 {
+            font-size: 27px;
+            line-height: 1.3;
+            margin: 0 0 18px;
+        }
+
+        .separatore {
+            border: 0;
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+
+        .disponibilita {
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .disponibile {
+            color: #16833c;
+        }
+
+        .esaurito {
+            color: #c62828;
+        }
+
+        .descrizione-breve {
+            font-size: 16px;
+            line-height: 1.7;
+            color: #333;
+        }
+
+        .prezzo {
+            font-size: 30px;
+            font-weight: bold;
+            color: #b12704;
+            margin: 15px 0;
+        }
+
+        .riquadro-acquisto {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .riquadro-acquisto h2 {
+            font-size: 17px;
+            margin-top: 0;
+        }
+
+        .nota-acquisto {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .autore {
+            font-size: 14px;
+            color: #555;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        .sezione {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-top: 25px;
+        }
+
+        .sezione h2 {
+            font-size: 23px;
+            margin-top: 0;
+            color: #131921;
+        }
+
+        .descrizione-completa {
+            line-height: 1.8;
+            color: #333;
+            white-space: pre-line;
+        }
+
+        .riepilogo-recensioni {
+            margin: 20px 0;
+        }
+
+        .media-voti {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .stelle {
+            color: #f0a000;
+            font-size: 23px;
+            margin: 8px 0;
+        }
+
+        .form-recensione {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 650px;
+            margin-top: 20px;
+        }
+
+        .form-recensione label {
+            font-weight: bold;
+        }
+
+        .form-recensione select,
+        .form-recensione textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: Arial, sans-serif;
+            font-size: 15px;
+        }
+
+        .form-recensione textarea {
+            resize: vertical;
+        }
+
+        .form-recensione button {
+            padding: 12px;
+            background: #ffd814;
+            border: none;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .form-recensione button:hover {
+            background: #f7ca00;
+        }
+
+        .singola-recensione {
+            padding: 18px 0;
+        }
+
+        .singola-recensione p {
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .nome-recensore {
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .data-recensione {
+            color: #777;
+            font-size: 13px;
+        }
+
+        .messaggio {
+            padding: 12px;
+            background: #e8f5e9;
+            color: #237a36;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .indietro {
+            display: inline-block;
+            margin: 25px 0;
+            color: #1769aa;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .indietro:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 1200px) {
+            .zoom-prodotto {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 950px) {
+            .scheda-prodotto {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .riquadro-acquisto {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .scheda-prodotto {
+                grid-template-columns: 1fr;
+                padding: 18px;
+            }
+
+            .immagine-contenitore {
+                height: 300px;
+            }
+
+            .riquadro-acquisto {
+                grid-column: auto;
+            }
+
+            .informazioni h1 {
+                font-size: 23px;
+            }
+
+            .pagina {
+                padding: 0 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="barra-superiore">
+        <a href="{{ url_for('dashboard') }}" class="logo">ElectroShop</a>
+        <a href="{{ url_for('logout') }}">Esci</a>
+    </header>
+
+    <main class="pagina">
+
+        <div class="percorso">
+            <a href="{{ url_for('dashboard') }}">Negozio</a>
+            &gt; {{ prodotto[1] }}
+        </div>
+
+        {% with messaggi = get_flashed_messages() %}
+            {% if messaggi %}
+                {% for messaggio in messaggi %}
+                    <div class="messaggio">{{ messaggio }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="scheda-prodotto">
+
+            <div class="galleria">
+
+                <div class="immagine-contenitore" id="contenitoreZoom">
+                    <img
+                        id="immagineProdotto"
+                        src="{{ url_for('immagine_prodotto', id_prodotto=prodotto[0]) }}"
+                        alt="{{ prodotto[1] }}"
+                        onerror="this.style.display='none'"
+                    >
+                </div>
+
+                <div class="zoom-prodotto" id="zoomProdotto"></div>
+
+            </div>
+
+            <div class="informazioni">
+
+                <h1>{{ prodotto[1] }}</h1>
+
+                <a href="#recensioni" style="text-decoration:none;color:#1769aa;">
+                    {{ "%.1f"|format(media_voti) }} su 5
+                    · {{ numero_recensioni }} recensioni
+                </a>
+
+                <hr class="separatore">
+
+                {% if prodotto[4] > 0 %}
+                    <p class="disponibilita disponibile">
+                        Disponibile
+                    </p>
+                {% else %}
+                    <p class="disponibilita esaurito">
+                        Attualmente non disponibile
+                    </p>
+                {% endif %}
+
+                <p class="descrizione-breve">
+                    {{ prodotto[2] }}
+                </p>
+
+                <hr class="separatore">
+
+                <p class="autore">
+                    <strong>Venduto su:</strong> ElectroShop
+                </p>
+
+            </div>
+
+            <aside class="riquadro-acquisto">
+
+                <h2>Prezzo</h2>
+
+                <p class="prezzo">
+                    {{ "%.2f"|format(prodotto[3])|replace(".", ",") }} €
+                </p>
+
+                {% if prodotto[4] > 0 %}
+                    <p class="disponibilita disponibile">
+                        Disponibilità: {{ prodotto[4] }} pezzi
+                    </p>
+                {% else %}
+                    <p class="disponibilita esaurito">
+                        Prodotto esaurito
+                    </p>
+                {% endif %}
+
+                <hr class="separatore">
+
+                <p class="nota-acquisto">
+                    Prodotto disponibile su ElectroShop.
+                </p>
+
+            </aside>
+
+        </div>
+
+        <section class="sezione">
+
+            <h2>Descrizione del prodotto</h2>
+
+            <p class="descrizione-completa">
+                {{ prodotto[2] }}
+            </p>
+
+        </section>
+
+        <section class="sezione" id="recensioni">
+
+            <h2>Recensioni dei clienti</h2>
+
+            <div class="riepilogo-recensioni">
+
+                <div class="media-voti">
+                    {{ "%.1f"|format(media_voti) }} su 5
+                </div>
+
+                <div class="stelle">
+                    {% for i in range(1, 6) %}
+                        {% if i <= media_voti|round(0, 'floor') %}
+                            ★
+                        {% else %}
+                            ☆
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <p>{{ numero_recensioni }} recensioni totali</p>
+
+            </div>
+
+            <hr class="separatore">
+
+            {% if not recensione_utente %}
+
+                <h3>Scrivi una recensione</h3>
+
+                <form
+                    method="POST"
+                    action="{{ url_for('aggiungi_recensione', id_prodotto=prodotto[0]) }}"
+                    class="form-recensione"
+                >
+
+                    <label for="voto">La tua valutazione</label>
+
+                    <select name="voto" id="voto" required>
+                        <option value="">Seleziona le stelle</option>
+                        <option value="5">★★★★★ - Ottimo</option>
+                        <option value="4">★★★★ - Buono</option>
+                        <option value="3">★★★ - Nella media</option>
+                        <option value="2">★★ - Scarso</option>
+                        <option value="1">★ - Pessimo</option>
+                    </select>
+
+                    <label for="commento">La tua recensione</label>
+
+                    <textarea
+                        name="commento"
+                        id="commento"
+                        rows="5"
+                        maxlength="2000"
+                        placeholder="Racconta la tua esperienza con questo prodotto..."
+                        required
+                    ></textarea>
+
+                    <button type="submit">
+                        Pubblica recensione
+                    </button>
+
+                </form>
+
+            {% else %}
+
+                <p>Hai già pubblicato una recensione per questo prodotto.</p>
+
+            {% endif %}
+
+            <hr class="separatore">
+
+            <h3>Tutte le recensioni</h3>
+
+            {% if recensioni %}
+
+                {% for recensione in recensioni %}
+
+                    <div class="singola-recensione">
+
+                        <div class="nome-recensore">
+                            {{ recensione[3] }}
+                        </div>
+
+                        <div class="stelle">
+                            {% for i in range(recensione[0]) %}
+                                ★
+                            {% endfor %}
+
+                            {% for i in range(5 - recensione[0]) %}
+                                ☆
+                            {% endfor %}
+                        </div>
+
+                        <p>{{ recensione[1] }}</p>
+
+                        <div class="data-recensione">
+                            {{ recensione[2].strftime("%d/%m/%Y %H:%M") }}
+                        </div>
+
+                    </div>
+
+                    <hr class="separatore">
+
+                {% endfor %}
+
+            {% else %}
+
+                <p>Non ci sono ancora recensioni per questo prodotto.</p>
+
+            {% endif %}
+
+        </section>
+
+        <a href="{{ url_for('dashboard') }}" class="indietro">
+            ← Torna al negozio
+        </a>
+
+    </main>
+
+    <script>
+        const contenitore = document.getElementById("contenitoreZoom");
+        const immagine = document.getElementById("immagineProdotto");
+        const zoom = document.getElementById("zoomProdotto");
+
+        const ingrandimento = 2.5;
+
+        contenitore.addEventListener("mouseenter", function () {
+            if (window.innerWidth <= 1200 || !immagine.complete || !immagine.naturalWidth) {
+                return;
+            }
+
+            zoom.style.display = "block";
+            zoom.style.backgroundImage = "url('" + immagine.src + "')";
+        });
+
+        contenitore.addEventListener("mousemove", function (evento) {
+            if (window.innerWidth <= 1200 || !immagine.naturalWidth) {
+                return;
+            }
+
+            const rettangolo = immagine.getBoundingClientRect();
+
+            const rapporto = Math.min(
+                rettangolo.width / immagine.naturalWidth,
+                rettangolo.height / immagine.naturalHeight
+            );
+
+            const larghezzaImmagine = immagine.naturalWidth * rapporto;
+            const altezzaImmagine = immagine.naturalHeight * rapporto;
+
+            const spazioX = (rettangolo.width - larghezzaImmagine) / 2;
+            const spazioY = (rettangolo.height - altezzaImmagine) / 2;
+
+            let x = (evento.clientX - rettangolo.left - spazioX) / larghezzaImmagine;
+            let y = (evento.clientY - rettangolo.top - spazioY) / altezzaImmagine;
+
+            x = Math.max(0, Math.min(1, x));
+            y = Math.max(0, Math.min(1, y));
+
+            const larghezzaZoom = larghezzaImmagine * ingrandimento;
+            const altezzaZoom = altezzaImmagine * ingrandimento;
+
+            zoom.style.backgroundSize =
+                larghezzaZoom + "px " + altezzaZoom + "px";
+
+            const posizioneX = x * 100;
+            const posizioneY = y * 100;
+
+            zoom.style.backgroundPosition =
+                posizioneX + "% " + posizioneY + "%";
+        });
+
+        contenitore.addEventListener("mouseleave", function () {
+            zoom.style.display = "none";
+        });
+    </script>
+
+</body>
+</html>

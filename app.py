@@ -31,13 +31,22 @@ def controllo_accesso():
 
     endpoint = request.endpoint
 
-    if endpoint in ["login", "registrati", "static"]:
+    if endpoint in ["login", "registrati", "password_dimenticata", "static"]:
         return
 
     if endpoint == "verifica":
-        if session.get("email_da_verificare") or session.get("login_da_verificare"):
+        if (
+            session.get("email_da_verificare")
+            or session.get("login_da_verificare")
+            or session.get("password_da_reimpostare")
+        ):
             return
         return redirect(url_for("login"))
+
+    if endpoint == "reimposta_password":
+        if session.get("id_persona_reimposta"):
+            return
+        return redirect(url_for("password_dimenticata"))
 
     if endpoint == "rinvia_codice":
         if session.get("email_da_verificare"):
@@ -69,6 +78,16 @@ def invia_email(destinatario, oggetto, messaggio):
 
 def genera_codice():
     return str(secrets.randbelow(900000) + 100000)
+
+
+def valida_password(password_inserita):
+    return (
+        len(password_inserita) >= 8
+        and any(carattere.isupper() for carattere in password_inserita)
+        and any(carattere.islower() for carattere in password_inserita)
+        and any(carattere.isdigit() for carattere in password_inserita)
+        and any(not carattere.isalnum() for carattere in password_inserita)
+    )
 
 
 def login_required(f):
@@ -166,6 +185,14 @@ def registrati():
 
             errore = "Compila tutti i campi!"
 
+        elif not valida_password(password_inserita):
+
+            errore = (
+                "La password deve contenere almeno 8 caratteri, "
+                "una lettera maiuscola, una minuscola, un numero "
+                "e un carattere speciale."
+            )
+
         else:
 
             password_hash = hashlib.sha256(
@@ -232,6 +259,8 @@ def registrati():
                     session.pop("ruolo", None)
                     session.pop("login_da_verificare", None)
                     session.pop("email_da_verificare", None)
+                    session.pop("password_da_reimpostare", None)
+                    session.pop("id_persona_reimposta", None)
 
                     session["email_da_verificare"] = username
 
@@ -273,8 +302,9 @@ def verifica():
 
     email = session.get("email_da_verificare")
     id_persona_login = session.get("login_da_verificare")
+    id_persona_reset = session.get("password_da_reimpostare")
 
-    if not email and not id_persona_login:
+    if not email and not id_persona_login and not id_persona_reset:
         return redirect(url_for("login"))
 
     if request.method == "POST":
@@ -294,13 +324,21 @@ def verifica():
                     WHERE username = %s AND verificato = 0
                 """, (email,))
 
-            else:
+            elif id_persona_login:
 
                 cursor.execute("""
                     SELECT id_persona, codice_verifica, scadenza_codice, ruolo
                     FROM persone
                     WHERE id_persona = %s AND verificato = 1
                 """, (id_persona_login,))
+
+            else:
+
+                cursor.execute("""
+                    SELECT id_persona, codice_verifica, scadenza_codice, ruolo
+                    FROM persone
+                    WHERE id_persona = %s AND verificato = 1
+                """, (id_persona_reset,))
 
             risultato = cursor.fetchone()
 
@@ -348,6 +386,11 @@ def verifica():
 
         if errore is None:
 
+            if id_persona_reset:
+                session.pop("password_da_reimpostare", None)
+                session["id_persona_reimposta"] = id_persona_reset
+                return redirect(url_for("reimposta_password"))
+
             session.pop("email_da_verificare", None)
             session.pop("login_da_verificare", None)
 
@@ -369,6 +412,127 @@ def verifica():
             return redirect(url_for("dashboard"))
 
     return render_template("verifica.html", errore=errore)
+
+
+@app.route("/password-dimenticata", methods=["GET", "POST"])
+def password_dimenticata():
+
+    errore = None
+
+    if request.method == "POST":
+
+        username = request.form.get("username", "").strip().lower()
+
+        if not username:
+            errore = "Inserisci la tua email."
+
+        else:
+
+            conn = connetti_db()
+            cursor = conn.cursor()
+
+            try:
+                cursor.execute("""
+                    SELECT id_persona
+                    FROM persone
+                    WHERE username = %s AND verificato = 1
+                """, (username,))
+
+                persona = cursor.fetchone()
+
+                if persona is None:
+                    errore = "Non esiste un account verificato con questa email."
+
+                else:
+                    codice = genera_codice()
+                    scadenza = datetime.now() + timedelta(minutes=10)
+
+                    cursor.execute("""
+                        UPDATE persone
+                        SET codice_verifica = %s,
+                            scadenza_codice = %s
+                        WHERE id_persona = %s
+                    """, (codice, scadenza, persona[0]))
+
+                    conn.commit()
+
+            finally:
+                cursor.close()
+                conn.close()
+
+            if errore is None:
+                session.pop("email_da_verificare", None)
+                session.pop("login_da_verificare", None)
+                session.pop("id_persona_reimposta", None)
+                session["password_da_reimpostare"] = persona[0]
+
+                try:
+                    invia_email(
+                        username,
+                        "Reimpostazione password ElectroShop",
+                        "Il tuo codice per reimpostare la password è: " + codice +
+                        "\n\nIl codice scade dopo 10 minuti."
+                    )
+                    return redirect(url_for("verifica"))
+
+                except Exception as e:
+                    print("Errore invio email:", e)
+                    session.pop("password_da_reimpostare", None)
+                    errore = "Non è stato possibile inviare l'email. Riprova."
+
+    return render_template("password_dimenticata.html", errore=errore)
+
+
+@app.route("/reimposta-password", methods=["GET", "POST"])
+def reimposta_password():
+
+    errore = None
+    id_persona = session.get("id_persona_reimposta")
+
+    if not id_persona:
+        return redirect(url_for("password_dimenticata"))
+
+    if request.method == "POST":
+
+        nuova_password = request.form.get("password", "")
+        conferma_password = request.form.get("conferma_password", "")
+
+        if not valida_password(nuova_password):
+            errore = (
+                "La password deve contenere almeno 8 caratteri, "
+                "una lettera maiuscola, una minuscola, un numero "
+                "e un carattere speciale."
+            )
+
+        elif nuova_password != conferma_password:
+            errore = "Le password non coincidono."
+
+        else:
+            password_hash = hashlib.sha256(
+                nuova_password.encode()
+            ).hexdigest()
+
+            conn = connetti_db()
+            cursor = conn.cursor()
+
+            try:
+                cursor.execute("""
+                    UPDATE persone
+                    SET pass = %s
+                    WHERE id_persona = %s AND verificato = 1
+                """, (password_hash, id_persona))
+
+                conn.commit()
+
+            finally:
+                cursor.close()
+                conn.close()
+
+            session.pop("id_persona_reimposta", None)
+            flash("Password modificata correttamente. Ora puoi accedere.")
+            return redirect(url_for("login"))
+
+    return render_template("reimposta_password.html", errore=errore)
 
 
 @app.route("/rinvia-codice", methods=["POST"])
@@ -571,14 +735,123 @@ def dettaglio_prodotto(id_prodotto):
 
         prodotto = cursor.fetchone()
 
+        if prodotto is None:
+            return "Prodotto non trovato", 404
+
+        cursor.execute("""
+            SELECT AVG(voto), COUNT(*)
+            FROM recensioni
+            WHERE id_prodotto = %s
+        """, (id_prodotto,))
+
+        riepilogo = cursor.fetchone()
+
+        media_voti = float(riepilogo[0]) if riepilogo[0] is not None else 0
+        numero_recensioni = riepilogo[1]
+
+        cursor.execute("""
+            SELECT r.voto, r.commento, r.data_recensione, p.username
+            FROM recensioni r
+            JOIN persone p ON r.id_persona = p.id_persona
+            WHERE r.id_prodotto = %s
+            ORDER BY r.data_recensione DESC
+        """, (id_prodotto,))
+
+        recensioni = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT id_recensione
+            FROM recensioni
+            WHERE id_prodotto = %s AND id_persona = %s
+        """, (id_prodotto, session["id_persona"]))
+
+        recensione_utente = cursor.fetchone()
+
     finally:
         cursor.close()
         conn.close()
 
-    if prodotto is None:
-        return "Prodotto non trovato", 404
+    return render_template(
+        "prodotto.html",
+        prodotto=prodotto,
+        media_voti=media_voti,
+        numero_recensioni=numero_recensioni,
+        recensioni=recensioni,
+        recensione_utente=recensione_utente
+    )
 
-    return render_template("prodotto.html", prodotto=prodotto)
+
+@app.route("/prodotto/<int:id_prodotto>/recensione", methods=["POST"])
+@login_required
+def aggiungi_recensione(id_prodotto):
+
+    voto = request.form.get("voto", "")
+    commento = request.form.get("commento", "").strip()
+
+    try:
+        voto = int(voto)
+
+        if voto < 1 or voto > 5:
+            raise ValueError
+
+    except ValueError:
+        flash("Seleziona un voto valido da 1 a 5.")
+        return redirect(url_for("dettaglio_prodotto", id_prodotto=id_prodotto))
+
+    if not commento:
+        flash("Inserisci un commento prima di pubblicare la recensione.")
+        return redirect(url_for("dettaglio_prodotto", id_prodotto=id_prodotto))
+
+    conn = connetti_db()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+            SELECT id_prodotto
+            FROM prodotti
+            WHERE id_prodotto = %s
+        """, (id_prodotto,))
+
+        prodotto = cursor.fetchone()
+
+        if prodotto is None:
+            return "Prodotto non trovato", 404
+
+        cursor.execute("""
+            SELECT id_recensione
+            FROM recensioni
+            WHERE id_prodotto = %s AND id_persona = %s
+        """, (id_prodotto, session["id_persona"]))
+
+        recensione_esistente = cursor.fetchone()
+
+        if recensione_esistente is not None:
+
+            flash("Hai già pubblicato una recensione per questo prodotto.")
+
+        else:
+
+            cursor.execute("""
+                INSERT INTO recensioni
+                (id_prodotto, id_persona, voto, commento)
+                VALUES (%s, %s, %s, %s)
+            """, (
+                id_prodotto,
+                session["id_persona"],
+                voto,
+                commento
+            ))
+
+            conn.commit()
+
+            flash("La tua recensione è stata pubblicata correttamente!")
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for("dettaglio_prodotto", id_prodotto=id_prodotto))
 
 
 @app.route("/immagine/<int:id_prodotto>")
@@ -881,6 +1154,11 @@ def server_records():
         return "ciaooo"
 
     return "Parametro non valido", 400
+
+
+@app.route('/chi-siamo')
+def chi_siamo():
+    return render_template('chi_siamo.html')
 
 
 @app.route("/api/dati", methods=["POST"])
